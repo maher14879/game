@@ -14,5 +14,10 @@ class Graphics():
         
     def update(self, sprites: list[Sprite]):
         self.screen.fill(color="black")
-        for sprite in sprites.sort(key=lambda sprite: sprite.scene_layer):
+        try: sorted_sprites: list[Sprite] = list(sprites.sort(key=lambda sprite: (sprite.scene_layer, sprite.position[1] if len(sprite.position) > 1 else 0)))
+        except: 
+            logging.warning("Graphics: unable to order sprites")
+            return None
+        
+        for sprite in sorted_sprites:
             sprite.draw()

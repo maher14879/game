@@ -18,7 +18,7 @@ class Loader():
     def create_chunk():
         pass
     
-    def setup():
+    def setup(self):
         pass
     
     def save():

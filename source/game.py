@@ -4,6 +4,11 @@ import sys
 
 from source.loader import Loader
 from source.graphics import Graphics
+from source.sprite import Sprite
+from source.sprite_types.entity import Entity
+from source.sprite_types.tile import Tile
+
+from source.functions import create_new_pos
 
 class Tick():
     def __init__(self):
@@ -27,6 +32,9 @@ class Game():
         self.loader = Loader()
         self.tick = Tick()
         self.graphics = Graphics()
+        
+        self.loader.setup()
+        self.graphics.setup()
     
     def save_settings(self):
         self.loader.setup()
@@ -44,12 +52,23 @@ class Game():
             pg.display.iconify()
                 
         dt = self.clock.tick() / 1000
+        sprites: list[Sprite] = []
         for chunk in self.loader.chunks:
             for sprite in chunk.values():
-                sprite.update(dt)
+                sprites.append(sprite)
+                
+        for sprite in sprites:
+            sprite.update(dt)
+            sprite.interact_update(sprite, sprites)
+            if self.tick.update(dt): sprite.tick_update()
             
-            if self.tick.update(dt):
-                for sprite in chunk.values():
-                    sprite.tick_update()
+        entities = [sprite for sprite in sprites if isinstance(sprite, Entity)]
+        tiles = [sprite for sprite in sprites if isinstance(sprite, Entity)]
         
-        self.graphics.update()
+        for entity in entities:
+            for tile in tiles:
+                new_position = create_new_pos(entity.new_position(dt), entity.box, tile.position, entity.box)
+                if any(not new_position): tile.collision_update()
+                else: entity.update_position(new_position)
+
+        self.graphics.update(sprites)

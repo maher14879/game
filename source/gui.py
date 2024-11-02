@@ -12,3 +12,7 @@ class inventory():
 class dialogue():
     def __init__(self):
         pass
+    
+class item():
+    def __init__(self):
+        pass

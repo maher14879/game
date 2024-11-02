@@ -3,7 +3,7 @@ import logging
 
 class Visual():
     def __init__(self):
-        pass
+        self.box = (0, 0)
     
     def update(self, dt):
         pass
