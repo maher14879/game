@@ -8,3 +8,7 @@ class slot():
 class inventory():
     def __init__(self):
         pass
+    
+class dialogue():
+    def __init__(self):
+        pass

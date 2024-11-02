@@ -1,28 +1,38 @@
 import pygame as pg
 import logging
 
-class animation():
+class Visual():
+    def __init__(self):
+        pass
+    
+    def update(self, dt):
+        pass
+    
+    def tick_update(self):
+        pass
+
+class Animation():
     def __init__(self):
         pass
     
     def draw():
         pass
 
-class image():
+class Image():
     def __init__(self):
         pass
     
     def draw():
         pass
 
-class figure():
+class Figure():
     def __init__(self):
         pass
     
     def draw():
         pass
 
-class text():
+class Text():
     def __init__(self):
         pass
     

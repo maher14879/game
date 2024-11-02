@@ -1,10 +1,12 @@
 import pygame as pg
 import logging
 
-class save():
-    def __init__(self):
-        active_chunks = list()
-        render_distance = int()
+from source.sprite import Sprite
+
+class Loader():
+    def __init__(self, render_distance = 10):
+        self.chunks: list[dict[str, Sprite]] = []
+        self.render_distance = render_distance
         pass
     
     def load_chunk():
@@ -16,6 +18,11 @@ class save():
     def create_chunk():
         pass
     
+    def setup():
+        pass
+    
+    def save():
+        pass
     
 
 #save as json of list[type: data] for each chunk    
