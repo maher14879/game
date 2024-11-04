@@ -7,9 +7,6 @@ class Visual():
     
     def update(self, dt):
         pass
-    
-    def tick_update(self):
-        pass
 
 class Animation():
     def __init__(self):

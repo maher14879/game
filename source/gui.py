@@ -1,18 +1,14 @@
 import pygame as pg
 import logging
 
-class slot():
+class Slot():
     def __init__(self):
         pass
 
-class inventory():
+class Inventory():
     def __init__(self):
         pass
     
-class dialogue():
-    def __init__(self):
-        pass
-    
-class item():
+class Dialogue():
     def __init__(self):
         pass

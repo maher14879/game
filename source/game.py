@@ -4,9 +4,11 @@ import sys
 
 from source.loader import Loader
 from source.graphics import Graphics
+from source.sounds import Sounds
 from source.sprite import Sprite
 from source.sprite_types.entity import Entity
 from source.sprite_types.tile import Tile
+from source.sprite_types.sub.player import Player
 
 from source.functions import create_new_pos
 
@@ -32,12 +34,26 @@ class Game():
         self.loader = Loader()
         self.tick = Tick()
         self.graphics = Graphics()
+        self.sounds = Sounds()
         
-        self.loader.setup()
+        self.sounds.setup()
         self.graphics.setup()
+        self.loader.setup()
+        
+        sprites: list[Sprite] = []
+        for id, chunk in self.loader.chunks.items():
+            if not chunk:
+                logging.warning(f"Loader: chunk with id {id} is not loaded correctly")
+                continue
+            for sprite in chunk:
+                if isinstance(sprite, Entity) and sprite.kill:
+                    self.loader.chunks[id].remove(sprite)
+                    continue
+                sprites.append(sprite)
+                
+        self.players: list[Player] = [sprite for sprite in sprites if isinstance(sprite, Player)]
     
     def save_settings(self):
-        self.loader.setup()
         pass
     
     def run(self):
@@ -52,23 +68,40 @@ class Game():
             pg.display.iconify()
                 
         dt = self.clock.tick() / 1000
+        tick_update = self.tick.update(dt)
+        
+        if tick_update and self.players: 
+            average_position = (sum([player.position[0] for player in self.players]) / self.players.count(), 
+                                sum([player.position[1] for player in self.players]) / self.players.count())
+            
+            self.loader.chunk_update(average_position)
+        
         sprites: list[Sprite] = []
-        for chunk in self.loader.chunks:
-            for sprite in chunk.values():
+        for id, chunk in self.loader.chunks.items():
+            if not chunk:
+                logging.warning(f"Loader: chunk with id {id} is not loaded correctly")
+                continue
+            for sprite in chunk:
+                if isinstance(sprite, Entity) and sprite.kill:
+                    self.loader.chunks[id].remove(sprite)
+                    continue
                 sprites.append(sprite)
                 
         for sprite in sprites:
             sprite.update(dt)
-            sprite.interact_update(sprite, sprites)
-            if self.tick.update(dt): sprite.tick_update()
+            sprite.interact_update(sprites)
+            if tick_update: sprite.tick_update()
             
         entities = [sprite for sprite in sprites if isinstance(sprite, Entity)]
-        tiles = [sprite for sprite in sprites if isinstance(sprite, Entity)]
+        tiles = [sprite for sprite in sprites if isinstance(sprite, Tile)]
         
         for entity in entities:
+            new_position = entity.new_position(dt)
             for tile in tiles:
-                new_position = create_new_pos(entity.new_position(dt), entity.box, tile.position, entity.box)
-                if any(not new_position): tile.collision_update()
-                else: entity.update_position(new_position)
+                new_position = create_new_pos(new_position, entity.box, tile.position, entity.box)
+                if not all(new_position): 
+                    tile.collision_update(entity)
+                    break
+            entity.update_position(new_position)
 
         self.graphics.update(sprites)

@@ -5,8 +5,8 @@ class Sprite():
         self.visual = visual
         self.updates = [self.visual.update]
         self.interact_updates = []
-        self.tick_updates = [self.visual.tick_update]
-        self.scene_layer = scene_layer #low to high
+        self.tick_updates = []
+        self.scene_layer = scene_layer
         self.position = position
         self.box = box if box else visual.box
     
@@ -17,9 +17,9 @@ class Sprite():
         for update in self.updates:
             update(dt)
             
-    def interact_update(self, sprite, sprites):
+    def interact_update(self, sprites):
         for interact_update in self.interact_updates:
-            interact_update(sprite, sprites)
+            interact_update(sprites)
     
     def tick_update(self):
         for tick_update in self.tick_updates:
