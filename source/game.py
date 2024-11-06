@@ -1,6 +1,7 @@
 import pygame as pg
 import logging
 import sys
+import json
 
 from source.loader import Loader
 from source.graphics import Graphics
@@ -10,12 +11,13 @@ from source.sprite_types.entity import Entity
 from source.sprite_types.tile import Tile
 from source.sprite_types.sub.player import Player
 
-from source.functions import create_new_pos
+from source.functions import create_new_pos, Random, Vec
+from assets.data.misc import intro_text, start_settings
 
 class Tick():
-    def __init__(self):
-        self.tick_speed = int()
-        self.current_tick = float()
+    def __init__(self, tick_speed = 30):
+        self.tick_speed = tick_speed
+        self.current_tick = tick_speed
     
     def update(self, dt: float) -> bool:
         self.current_tick += dt
@@ -30,31 +32,34 @@ class Game():
         pg.mixer.init()
     
     def setup(self):
+        self.settings = self.read_settings()
         self.clock = pg.time.Clock()
-        self.loader = Loader()
+        self.random = Random(self.settings["seed"])
+        self.loader = Loader(random=self.random)
         self.tick = Tick()
         self.graphics = Graphics()
         self.sounds = Sounds()
         
-        self.sounds.setup()
         self.graphics.setup()
+        
+        self.graphics.intro_text(self.random.choice(intro_text))
+        self.sounds.setup()
+        
+        self.graphics.intro_text(self.random.choice(intro_text))
         self.loader.setup()
         
-        sprites: list[Sprite] = []
-        for id, chunk in self.loader.chunks.items():
-            if not chunk:
-                logging.warning(f"Loader: chunk with id {id} is not loaded correctly")
-                continue
-            for sprite in chunk:
-                if isinstance(sprite, Entity) and sprite.kill:
-                    self.loader.chunks[id].remove(sprite)
-                    continue
-                sprites.append(sprite)
-                
-        self.players: list[Player] = [sprite for sprite in sprites if isinstance(sprite, Player)]
+    def read_settings(self):
+        try: 
+            with open("save\\settings.json", "r") as file: return json.load(file)
+        except:
+            logging.warning("Game: could not find settings")
+            return start_settings
     
     def save_settings(self):
-        pass
+        try:
+            with open("save\\settings.json", "w") as file: json.dump(file, self.settings)
+        except:
+            logging.warning("Game: could not save settings")
     
     def run(self):
         for event in pg.event.get():
@@ -69,39 +74,45 @@ class Game():
                 
         dt = self.clock.tick() / 1000
         tick_update = self.tick.update(dt)
-        
-        if tick_update and self.players: 
-            average_position = (sum([player.position[0] for player in self.players]) / self.players.count(), 
-                                sum([player.position[1] for player in self.players]) / self.players.count())
-            
-            self.loader.chunk_update(average_position)
-        
+
         sprites: list[Sprite] = []
         for id, chunk in self.loader.chunks.items():
             if not chunk:
-                logging.warning(f"Loader: chunk with id {id} is not loaded correctly")
+                logging.warning(f"Loader: chunk with id {id} is empty")
                 continue
             for sprite in chunk:
+                if not isinstance(sprite, Sprite):
+                    logging.warning(f"Game: sprite removed due to being sprite {sprite}")
+                    continue
                 if isinstance(sprite, Entity) and sprite.kill:
                     self.loader.chunks[id].remove(sprite)
                     continue
                 sprites.append(sprite)
                 
+        entities = [sprite for sprite in sprites if isinstance(sprite, Entity) or issubclass(type(sprite), Entity)]
+        tiles = [sprite for sprite in sprites if isinstance(sprite, Tile) or issubclass(type(sprite), Tile)]
+        players = [entity for entity in entities if isinstance(entity, Player) or issubclass(type(sprite), Player)]
+        
+        if players: 
+            new_average = Vec((0,0))
+            for player in players:
+                new_average = new_average.add(player.position)  
+            self.average_position = new_average.mul(1 / len(players))
+        
+        if tick_update: self.loader.chunk_update(self.average_position)
         for sprite in sprites:
             sprite.update(dt)
             sprite.interact_update(sprites)
             if tick_update: sprite.tick_update()
-            
-        entities = [sprite for sprite in sprites if isinstance(sprite, Entity)]
-        tiles = [sprite for sprite in sprites if isinstance(sprite, Tile)]
-        
+
         for entity in entities:
             new_position = entity.new_position(dt)
             for tile in tiles:
-                new_position = create_new_pos(new_position, entity.box, tile.position, entity.box)
-                if not all(new_position): 
+                collide_update = create_new_pos(new_position, entity.box, tile.position, entity.box)
+                if not all(collide_update): 
                     tile.collision_update(entity)
+                    entity.update_position(collide_update)
                     break
             entity.update_position(new_position)
 
-        self.graphics.update(sprites)
+        self.graphics.update(dt, self.average_position, sprites)
