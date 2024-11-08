@@ -20,9 +20,6 @@ class Entity(Sprite):
         
     def new_position(self, dt) -> Vec:
         return self.position.add(self.direction.mul(self.speed).mul(dt))
-    
-    def update_position(self, position: Vec):
-        self.position.update(position)
         
     def take_damage(self, damage: int, source: Sprite, damage_type: str = None):
         self.health -= damage

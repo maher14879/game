@@ -7,7 +7,6 @@ from source.functions import Vec
 
 class Graphics():
     def __init__(self):
-        self.zoom = 10
         self.camera_speed = 2
         self.camera = Vec((0,0))
         
@@ -37,15 +36,10 @@ class Graphics():
         
         for sprite in sprites:
             if not sprite.visual.is_visible: continue
-            
-            position = sprite.position.sub(self.camera).mul(self.zoom).add(self.screen_center)
-            if not position.less(self.screen_center.mul(2)) and Vec((0,0)).less(position): continue
-            self.screen.blit(sprite.visual.surface, position.to_tuple())
-            
-            try: 
-                position = sprite.position.sub(self.camera).mul(self.zoom).add(self.screen_center)
+            try:
+                position = sprite.position.sub(self.camera).add(self.screen_center)
                 if not position.less(self.screen_center.mul(2)) and Vec((0,0)).less(position): continue
-                self.screen.blit(sprite.visual.surface, position.to_tuple())
+                for surface in sprite.visual.surfaces: self.screen.blit(surface, position.to_tuple())
             except:
                 logging.warning(f"Graphics: unable to draw sprite {vars(sprite)}")
         pg.display.update()

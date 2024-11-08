@@ -6,12 +6,13 @@ import json
 from source.loader import Loader
 from source.graphics import Graphics
 from source.sounds import Sounds
+from source.visual import font_dict_setup, image_dict_setup
 from source.sprite import Sprite
 from source.sprite_types.entity import Entity
 from source.sprite_types.tile import Tile
 from source.sprite_types.sub.player import Player
 
-from source.functions import create_new_pos, Random, Vec
+from source.functions import test_collision, Random, Vec
 from assets.data.misc import intro_text, start_settings
 
 class Tick():
@@ -35,18 +36,24 @@ class Game():
         self.settings = self.read_settings()
         self.clock = pg.time.Clock()
         self.random = Random(self.settings["seed"])
-        self.loader = Loader(random=self.random)
+        self.loader = Loader(random=self.random, chunk_size=self.settings["chunk_size"] * self.settings["scale"])
         self.tick = Tick()
         self.graphics = Graphics()
         self.sounds = Sounds()
         
+        font_dict_setup(self.settings["font_size"])
         self.graphics.setup()
         
         self.graphics.intro_text(self.random.choice(intro_text))
         self.sounds.setup()
         
         self.graphics.intro_text(self.random.choice(intro_text))
-        self.loader.setup()
+        
+        self.graphics.intro_text(self.random.choice(intro_text))
+        image_dict_setup(self.settings["scale"])
+        
+        self.graphics.intro_text(self.random.choice(intro_text))
+        self.loader.setup(self.settings["load"])
         
     def read_settings(self):
         try: 
@@ -57,7 +64,7 @@ class Game():
     
     def save_settings(self):
         try:
-            with open("save\\settings.json", "w") as file: json.dump(file, self.settings)
+            with open("save\\settings.json", "w") as file: json.dump(self.settings, file)
         except:
             logging.warning("Game: could not save settings")
     
@@ -75,20 +82,8 @@ class Game():
         dt = self.clock.tick() / 1000
         tick_update = self.tick.update(dt)
 
-        sprites: list[Sprite] = []
-        for id, chunk in self.loader.chunks.items():
-            if not chunk:
-                logging.warning(f"Loader: chunk with id {id} is empty")
-                continue
-            for sprite in chunk:
-                if not isinstance(sprite, Sprite):
-                    logging.warning(f"Game: sprite removed due to being sprite {sprite}")
-                    continue
-                if isinstance(sprite, Entity) and sprite.kill:
-                    self.loader.chunks[id].remove(sprite)
-                    continue
-                sprites.append(sprite)
-                
+        sprites = self.loader.get_sprites()
+
         entities = [sprite for sprite in sprites if isinstance(sprite, Entity) or issubclass(type(sprite), Entity)]
         tiles = [sprite for sprite in sprites if isinstance(sprite, Tile) or issubclass(type(sprite), Tile)]
         players = [entity for entity in entities if isinstance(entity, Player) or issubclass(type(sprite), Player)]
@@ -106,13 +101,16 @@ class Game():
             if tick_update: sprite.tick_update()
 
         for entity in entities:
-            new_position = entity.new_position(dt)
+            target = entity.new_position(dt)
+            x_collide, y_collide = False, False
             for tile in tiles:
-                collide_update = create_new_pos(new_position, entity.box, tile.position, entity.box)
-                if not all(collide_update): 
-                    tile.collision_update(entity)
-                    entity.update_position(collide_update)
-                    break
-            entity.update_position(new_position)
+                x, y = test_collision(entity.position, target, entity.box, tile.position, tile.box)
+                if x or y: tile.collision_update(entity)
+                x_collide = x_collide or x
+                y_collide = y_collide or y
+            
+            target.x = target.x if not x_collide else None
+            target.y = target.y if not y_collide else None
+            entity.position.update(target.to_tuple())
 
         self.graphics.update(dt, self.average_position, sprites)

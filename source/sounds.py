@@ -19,7 +19,7 @@ class Sounds():
                 logging.warning(f"Sounds: Unable to convert {path} to Sound")
                 continue
 
-    def play(self, sound_name: str, volume: 100.0, channel_num: int = None):
+    def play(self, sound_name: str, must_play: bool = False, volume: float = 100.0, channel_num: int = None):
         """Play a sound on a specified or free channel.
 
         Args:
@@ -31,8 +31,9 @@ class Sounds():
             sound = self.sounds[sound_name]
             sound.set_volume(volume / 100)
 
-            if channel_num is not None: channel = pg.mixer.Channel(channel_num)
+            if channel_num: channel = pg.mixer.Channel(channel_num)
             else: channel = pg.mixer.find_channel()
 
-            if channel is not None: channel.play(sound)
+            if channel: channel.play(sound)
+            elif must_play: pg.mixer.Channel(1).play(sound)
             else: logging.warning(f"Sounds: No available channel to play sound {sound_name}")

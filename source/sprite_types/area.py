@@ -1,6 +1,6 @@
 from source.sprite import Sprite
-from source.visual import Visual
 
 class Area(Sprite):
-    def __init__(self, visual: Visual, scene_layer: int, health: int):
-        super().__init__(visual, scene_layer)
+    def __init__(self, position, visual, scene_layer = 1, box=None):
+        super().__init__(position, visual, scene_layer, box)
+        
