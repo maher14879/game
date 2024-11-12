@@ -8,18 +8,13 @@ class Sounds():
         self.sounds: dict[str, pg.mixer.Sound] = {}
     
     def setup(self):
-        for path in read_folder("assets\\sound", ".ost"):
-            try: sound_name = path.replace("\\", "_")
-            except: 
-                logging.warning(f"Sounds: Unable to convert {path} to sound_name")
-                continue
-            
-            try: self.sounds[sound_name] = pg.mixer.Sound(path)
+        for path in read_folder("assets\\sound", ".ogg"):
+            try: self.sounds[path] = pg.mixer.Sound(path)
             except: 
                 logging.warning(f"Sounds: Unable to convert {path} to Sound")
                 continue
 
-    def play(self, sound_name: str, must_play: bool = False, volume: float = 100.0, channel_num: int = None):
+    def play(self, sound_name: str, volume: float = 1, channel_num: int = None, must_play: bool = False):
         """Play a sound on a specified or free channel.
 
         Args:
@@ -27,13 +22,22 @@ class Sounds():
             volume (float): Volume level (0.0 to 100.0).
             channel_num (int, optional): Specific channel to play on. If None, uses a free channel.
         """
-        if sound_name in self.sounds:
-            sound = self.sounds[sound_name]
-            sound.set_volume(volume / 100)
+        if not sound_name in self.sounds.keys(): raise ValueError(f"Sounds: {sound_name} does not exist")
+            
+        sound = self.sounds[sound_name]
+        sound.set_volume(volume)
 
-            if channel_num: channel = pg.mixer.Channel(channel_num)
-            else: channel = pg.mixer.find_channel()
+        if channel_num: channel = pg.mixer.Channel(channel_num)
+        else: channel = pg.mixer.find_channel()
 
-            if channel: channel.play(sound)
-            elif must_play: pg.mixer.Channel(1).play(sound)
-            else: logging.warning(f"Sounds: No available channel to play sound {sound_name}")
+        if channel: channel.play(sound)
+        elif must_play: pg.mixer.Channel(1).play(sound)
+        else: logging.warning(f"Sounds: No available channel to play sound {sound_name}")
+            
+    def len(self, sound_name: str):
+        if not sound_name in self.sounds.keys(): raise ValueError(f"Sounds: {sound_name} does not exist")
+        
+        sound = self.sounds[sound_name]
+        return sound.get_length()
+    
+sounds = Sounds()

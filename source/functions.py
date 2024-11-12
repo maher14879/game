@@ -1,22 +1,19 @@
 import os
-import logging
 import math
 import random
 
 def read_folder(path: str, file_type: str = None) -> list[str]:
-    if not os.path.exists(path):
-        logging.warning(f"Functions: read_folder path does not exist {path}")
-        return []
-    
+    if not os.path.exists(path): raise ValueError(f"Functions: read_folder path does not exist {path}")
     path_list = []
     for file in os.listdir(path):
         joined_path = os.path.join(path, file)
-        if not file_type or file.endswith(file_type): path_list.append(joined_path)
-        elif os.path.isdir(path): path_list += read_folder(joined_path, file_type)
+        if os.path.isfile(joined_path): 
+            if not file_type or file.lower().endswith(file_type.lower()): path_list.append(joined_path)
+        elif os.path.isdir(joined_path): path_list += read_folder(joined_path, file_type)
     return path_list
 
 class Vec():
-    def __init__(self, x_y= tuple[float, float]):
+    def __init__(self, x_y = tuple[float, float]):
         if type(x_y) == Vec: x, y = x_y.to_tuple()
         else: x, y = x_y
         self.x = float(x)
@@ -43,8 +40,8 @@ class Vec():
     def abs(self): return Vec((abs(self.x), abs(self.y)))
     
     def rot(self, rad): 
-        rot_x = Vec(math.cos(rad),-math.sin(rad))
-        rot_y = Vec(math.sin(rad), math.cos(rad))
+        rot_x = Vec((math.cos(rad),-math.sin(rad)))
+        rot_y = Vec((math.sin(rad), math.cos(rad)))
         return Vec((self.dot(rot_x), self.dot(rot_y)))
     
     def relu(self): return Vec((max(0, self.x), max(0, self.y)))
@@ -62,8 +59,7 @@ class Vec():
     
     def norm(self):
         length = self.len()
-        if length == 0:
-            return Vec(0, 0)
+        if length == 0: return Vec((0, 0))
         return Vec((self.x / length, self.y / length))
     
     def collides_with(self, box: "Vec", obstacle: "Vec", obstacle_box: "Vec") -> bool:
@@ -82,9 +78,8 @@ class Vec():
         return overlap.len_sqr()
 
 def test_collision(origin: Vec, target: Vec, box: Vec, obstacle: Vec, obstacle_box: Vec) -> tuple[float, float | None]:
-    if not target.collides_with(box, obstacle, obstacle_box): return (False, False)
-
     origin_distance = origin.collide_distance(box, obstacle, obstacle_box)
+    if not target.collides_with(box, obstacle, obstacle_box) or origin_distance < 0: return (False, False)
     
     delta_x_distance = Vec((target.x, origin.y)).collide_distance(box, obstacle, obstacle_box)
     if 0 < delta_x_distance <= origin_distance: return (False, True)

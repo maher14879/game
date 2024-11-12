@@ -13,7 +13,6 @@ start_settings = {
     "seed":121,
     "load":False,
     "scale":3,
-    "font_size":10,
     "chunk_size":1000,
     "player_input":{
         "up":"w",

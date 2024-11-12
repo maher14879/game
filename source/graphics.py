@@ -6,8 +6,9 @@ from source.visual import Visual
 from source.functions import Vec
 
 class Graphics():
-    def __init__(self):
-        self.camera_speed = 2
+    def __init__(self, scale):
+        self.scale = scale
+        self.camera_speed = 2 
         self.camera = Vec((0,0))
         
     def setup(self):
@@ -26,9 +27,9 @@ class Graphics():
     def update(self, dt, center: Vec, sprites: list[Sprite]):
         self.screen.fill(color="black")
         try: sprites.sort(key=lambda sprite: (sprite.scene_layer, sprite.position.y, sprite.position.x))
-        except: 
-            logging.warning(f"Graphics: unable to order sprites")
-   
+        except: logging.warning(f"Graphics: unable to order sprites")
+        
+        center = center.mul(self.scale)
         difference = center.sub(self.camera)
         scalar = self.camera_speed * dt
         delta_cam = difference.mul(scalar)
@@ -36,15 +37,10 @@ class Graphics():
         
         for sprite in sprites:
             if not sprite.visual.is_visible: continue
-            try:
-                position = sprite.position.sub(self.camera).add(self.screen_center)
-                if not position.less(self.screen_center.mul(2)) and Vec((0,0)).less(position): continue
-                for surface in sprite.visual.surfaces: self.screen.blit(surface, position.to_tuple())
-            except:
-                logging.warning(f"Graphics: unable to draw sprite {vars(sprite)}")
+            position = sprite.position.mul(self.scale).sub(self.camera).add(self.screen_center)
+            if not position.less(self.screen_center.mul(2)) and Vec((0,0)).less(position): continue
+            for surface in sprite.visual.surfaces: 
+                try: self.screen.blit(surface, position.to_tuple())
+                except: raise ValueError(f"Graphics: unable to draw surface {surface}")
         pg.display.update()
-        
-    def tick_update(self, sprites: list[Sprite], show_figure: bool = False):
-        if show_figure:
-            for sprite in sprites: sprite.visual.show_figure = True
         

@@ -9,10 +9,10 @@ class Status_effect():
         self.death_updates = []
 
 class Entity(Sprite):
-    def __init__(self, position, visual, name: str, health: int, status_effect: Status_effect = None,  scene_layer = 1, box=None):
-        super().__init__(position, visual, scene_layer, box)
+    def __init__(self, position, visual, name: str, health: int, status_effect: Status_effect = None,  scene_layer = 1):
+        super().__init__(position, visual, scene_layer)
         self.direction: Vec = Vec((0, 0))
-        self.speed = 1
+        self.speed = 0
         self.name = name
         self.health = health
         self.take_damage_updates = []
@@ -32,7 +32,7 @@ class Entity(Sprite):
     def death_update(self, source: Sprite, damage_type: str):
         self.kill = True
         for death_update in self.death_updates:
-            death_update(source, damage_type)
+            death_update(self, source, damage_type)
     
     def add_status_effect(self, status_effect: Status_effect):
         self.updates.append(status_effect.updates)

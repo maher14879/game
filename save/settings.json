@@ -1,1 +1,1 @@
-{"seed": 121, "load": false, "scale": 3, "font_size": 10, "chunk_size": 1000, "player_input": {"up": "w", "down": "s", "left": "a", "right": "d"}}
+{"seed": 121, "load": false, "scale": 3, "font_size": 10, "chunk_size": 400, "player_input": {"up": "w", "down": "s", "left": "a", "right": "d"}}

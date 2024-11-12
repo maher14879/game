@@ -3,9 +3,9 @@ import logging
 import sys
 import json
 
+from source.sounds import sounds
 from source.loader import Loader
 from source.graphics import Graphics
-from source.sounds import Sounds
 from source.visual import font_dict_setup, image_dict_setup
 from source.sprite import Sprite
 from source.sprite_types.entity import Entity
@@ -36,18 +36,15 @@ class Game():
         self.settings = self.read_settings()
         self.clock = pg.time.Clock()
         self.random = Random(self.settings["seed"])
-        self.loader = Loader(random=self.random, chunk_size=self.settings["chunk_size"] * self.settings["scale"])
+        self.loader = Loader(random=self.random, chunk_size=self.settings["chunk_size"])
         self.tick = Tick()
-        self.graphics = Graphics()
-        self.sounds = Sounds()
+        self.graphics = Graphics(self.settings["scale"])
         
-        font_dict_setup(self.settings["font_size"])
+        font_dict_setup(self.settings["scale"])
         self.graphics.setup()
         
         self.graphics.intro_text(self.random.choice(intro_text))
-        self.sounds.setup()
-        
-        self.graphics.intro_text(self.random.choice(intro_text))
+        sounds.setup()
         
         self.graphics.intro_text(self.random.choice(intro_text))
         image_dict_setup(self.settings["scale"])
@@ -63,10 +60,9 @@ class Game():
             return start_settings
     
     def save_settings(self):
-        try:
+        try: 
             with open("save\\settings.json", "w") as file: json.dump(self.settings, file)
-        except:
-            logging.warning("Game: could not save settings")
+        except: logging.warning("Game: could not save settings")
     
     def run(self):
         for event in pg.event.get():
@@ -98,6 +94,7 @@ class Game():
         for sprite in sprites:
             sprite.update(dt)
             sprite.interact_update(sprites)
+            for spawn_sprite in sprite.spawn_list: self.loader.add_sprite(spawn_sprite)
             if tick_update: sprite.tick_update()
 
         for entity in entities:
