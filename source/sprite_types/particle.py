@@ -1,8 +1,8 @@
 from source.sprite import Sprite
 from source.functions import Vec
 
-def new_position(self: "Particle", dt) -> Vec:
-    return self.position.add(self.direction.mul(self.speed).mul(dt))
+def update_position(self: "Particle", dt) -> Vec:
+    self.position = self.position.add(self.direction.mul(self.speed).mul(dt))
 
 def rotation_update(self: "Particle", dt):
     if self.rotation: self.direction = self.direction.rot(self.rotation * dt)
@@ -21,7 +21,7 @@ class Particle(Sprite):
     def __init__(self, position, visual, scene_layer = 1, box=None, direction: Vec = Vec((0, 0)), speed: float = 1., max_age = 1, 
                  rotation: float = None, spawn: "Particle" = None, spawn_speed: float = 1.):
         super().__init__(position, visual, scene_layer, box)
-        self.updates += [rotation_update, age_update, spawn_update]
+        self.updates += [update_position, rotation_update, age_update, spawn_update]
         self.direction = Vec(direction)
         self.speed = speed
         

@@ -5,8 +5,8 @@ import json
 
 from source.sounds import sounds
 from source.loader import Loader
-from source.graphics import Graphics
-from source.visual import font_dict_setup, image_dict_setup
+from source.graphics import Graphics, font_dict_setup, image_dict_setup
+
 from source.sprite import Sprite
 from source.sprite_types.entity import Entity
 from source.sprite_types.tile import Tile
@@ -36,9 +36,10 @@ class Game():
         self.settings = self.read_settings()
         self.clock = pg.time.Clock()
         self.random = Random(self.settings["seed"])
-        self.loader = Loader(random=self.random, chunk_size=self.settings["chunk_size"])
+        self.loader = Loader(random=self.random, render_distance= self.settings["render_distance"], chunk_size=self.settings["chunk_size"])
         self.tick = Tick()
         self.graphics = Graphics(self.settings["scale"])
+        self.average_position = Vec(self.settings["average_position"])
         
         font_dict_setup(self.settings["scale"])
         self.graphics.setup()
@@ -60,8 +61,9 @@ class Game():
             return start_settings
     
     def save_settings(self):
+        self.settings["average_position"] = self.average_position.to_tuple()
         try: 
-            with open("save\\settings.json", "w") as file: json.dump(self.settings, file)
+            with open("save\\settings.json", "w") as file: json.dump(self.settings, file, indent=4)
         except: logging.warning("Game: could not save settings")
     
     def run(self):
@@ -78,11 +80,11 @@ class Game():
         dt = self.clock.tick() / 1000
         tick_update = self.tick.update(dt)
 
-        sprites = self.loader.get_sprites()
+        sprites = self.loader.sprites
 
         entities = [sprite for sprite in sprites if isinstance(sprite, Entity) or issubclass(type(sprite), Entity)]
-        tiles = [sprite for sprite in sprites if isinstance(sprite, Tile) or issubclass(type(sprite), Tile)]
         players = [entity for entity in entities if isinstance(entity, Player) or issubclass(type(sprite), Player)]
+        tiles = [sprite for sprite in sprites if isinstance(sprite, Tile) or issubclass(type(sprite), Tile)]
         
         if players: 
             new_average = Vec((0,0))
@@ -90,24 +92,24 @@ class Game():
                 new_average = new_average.add(player.position)  
             self.average_position = new_average.mul(1 / len(players))
         
-        if tick_update: self.loader.chunk_update(self.average_position)
+        self.loader.chunk_update(self.average_position)
+        
         for sprite in sprites:
             sprite.update(dt)
             sprite.interact_update(sprites)
-            for spawn_sprite in sprite.spawn_list: self.loader.add_sprite(spawn_sprite)
             if tick_update: sprite.tick_update()
 
         for entity in entities:
-            target = entity.new_position(dt)
+            target = entity.get_new_position(dt)
             x_collide, y_collide = False, False
             for tile in tiles:
+                if tile.collision == False: continue
                 x, y = test_collision(entity.position, target, entity.box, tile.position, tile.box)
                 if x or y: tile.collision_update(entity)
                 x_collide = x_collide or x
                 y_collide = y_collide or y
             
-            target.x = target.x if not x_collide else None
-            target.y = target.y if not y_collide else None
-            entity.position.update(target.to_tuple())
+            if not x_collide: entity.position.x = target.x
+            if not y_collide: entity.position.y = target.y
 
         self.graphics.update(dt, self.average_position, sprites)

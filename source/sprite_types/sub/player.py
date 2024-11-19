@@ -35,8 +35,8 @@ def update_direction(self: "Player", dt):
     self.speed = max(self.speed, 0)
 
 class Player(Entity):
-    def __init__(self, position, visual, name, health, player_input: Input, status_effect = None, scene_layer = 1, acceleration: float = 300.):
-        super().__init__(position, visual, name, health, status_effect, scene_layer)
+    def __init__(self, position, visual, name, health, player_input: Input, scene_layer = 1, acceleration: float = 300.):
+        super().__init__(position, visual, name, health, scene_layer)
         self.updates.append(update_direction)
         self.player_input = player_input
         self.acceleration = acceleration

@@ -14,12 +14,13 @@ def read_folder(path: str, file_type: str = None) -> list[str]:
 
 class Vec():
     def __init__(self, x_y = tuple[float, float]):
-        if type(x_y) == Vec: x, y = x_y.to_tuple()
+        if isinstance(x_y, str): x, y = x_y.replace("(", "").replace(")", "").split(",")
+        if isinstance(x_y, Vec): x, y = x_y.to_tuple()
         else: x, y = x_y
         self.x = float(x)
         self.y = float(y)
         
-    def to_tuple(self, integer: bool = False): return (round(self.x), round(self.y)) if integer else (self.x, self.y)
+    def to_tuple(self, integer: bool = False): return (math.floor(self.x), math.floor(self.y)) if integer else (self.x, self.y)
     
     def update(self, x_y: tuple[float|None, float|None]):
         x, y = x_y
@@ -27,7 +28,7 @@ class Vec():
         self.y = y if not y == None else self.y
     
     def mul(self, scale: float): 
-        if type(scale) == Vec: scale_x, scale_y = scale.to_tuple()
+        if isinstance(scale, Vec): scale_x, scale_y = scale.to_tuple()
         else: scale_x, scale_y = scale, scale
         return Vec((self.x * scale_x, self.y * scale_y))
 
@@ -47,7 +48,7 @@ class Vec():
     def relu(self): return Vec((max(0, self.x), max(0, self.y)))
     
     def less(self, scale: float): 
-        if type(scale) == Vec: scale_x, scale_y = scale.to_tuple()
+        if isinstance(scale, Vec): scale_x, scale_y = scale.to_tuple()
         else: scale_x, scale_y = scale, scale
         return self.x < scale_x and self.y < scale_y
     
